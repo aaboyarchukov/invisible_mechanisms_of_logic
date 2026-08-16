@@ -1,11 +1,5 @@
 package codewithbags
 
-type FinOperations interface {
-	Deposit(value float64)
-	Withdraw(value float64)
-	GetBalance() float64
-}
-
 type BankAccount struct {
 	balance float64
 }
