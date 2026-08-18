@@ -34,7 +34,11 @@ func TestBankAccount(t *testing.T) {
 		for iteration := range c.depositReplyes {
 			randomValue := randomFloat.Random()
 
-			testBankAccount.Deposit(randomValue)
+			err := testBankAccount.Deposit(randomValue)
+			if err != nil {
+				t.Logf("deposit error: %v", err)
+			}
+
 			targetBalance = testBankAccount.GetBalance()
 
 			t.Logf("balance after %d deposit iteration: %f", iteration, targetBalance)
@@ -47,7 +51,11 @@ func TestBankAccount(t *testing.T) {
 		for iteration := range c.withDrawReplyes {
 			randomValue := randomFloat.Random()
 
-			testBankAccount.Withdraw(randomValue)
+			err := testBankAccount.Withdraw(randomValue)
+			if err != nil {
+				t.Logf("withdraw error: %v", err)
+			}
+
 			targetBalance = testBankAccount.GetBalance()
 
 			t.Logf("balance after %d withdraw iteration: %f", iteration, targetBalance)

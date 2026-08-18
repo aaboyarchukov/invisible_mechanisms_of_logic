@@ -131,3 +131,94 @@ func TestBankAccount(t *testing.T) {
 ```
 
 Как видно из приведенного теста, в конечном итоге мы изменили состояние банковского счета до отрицательного значения, что непозволительно для банков, соответсвенно наш код содержит баги.
+
+## Исправление
+
+```go
+package codewithbags
+
+import "errors"
+
+var ErrNotEnoughBalance = errors.New("not enough balance")
+var ErrInvalidValue = errors.New("invalid value")
+
+type BankAccount struct {
+	balance float64
+}
+
+func New(initBalance float64) *BankAccount {
+	return &BankAccount{
+		balance: initBalance,
+	}
+}
+
+func (ba *BankAccount) Deposit(value float64) error {
+	if value <= 0 {
+		return ErrInvalidValue
+	}
+
+	ba.balance += value
+
+	return nil
+}
+
+func (ba *BankAccount) Withdraw(value float64) error {
+	if value <= 0 {
+		return ErrInvalidValue
+	}
+
+	if ba.balance < value {
+		return ErrNotEnoughBalance
+	}
+
+	ba.balance -= value
+
+	return nil
+}
+
+func (ba *BankAccount) GetBalance() float64 {
+	return ba.balance
+}
+
+```
+
+Теперь результаты тестов:
+
+```bash
+=== RUN   TestBankAccount
+    bank_account_test.go:33: Testing deposit func to bank account:
+    bank_account_test.go:44: balance after 0 deposit iteration: 190.490930
+    bank_account_test.go:44: balance after 1 deposit iteration: 204.813007
+    bank_account_test.go:44: balance after 2 deposit iteration: 263.690831
+    bank_account_test.go:44: balance after 3 deposit iteration: 333.431729
+    bank_account_test.go:44: balance after 4 deposit iteration: 362.294753
+    bank_account_test.go:44: balance after 5 deposit iteration: 411.479176
+    bank_account_test.go:44: balance after 6 deposit iteration: 462.636959
+    bank_account_test.go:44: balance after 7 deposit iteration: 562.006817
+    bank_account_test.go:44: balance after 8 deposit iteration: 584.821861
+    bank_account_test.go:44: balance after 9 deposit iteration: 598.347266
+    bank_account_test.go:48: balance after all deposit iterations: 598.347266
+    bank_account_test.go:50: Testing withdraw func to bank account:
+    bank_account_test.go:61: balance after 0 withdraw iteration: 533.672484
+    bank_account_test.go:61: balance after 1 withdraw iteration: 463.394529
+    bank_account_test.go:61: balance after 2 withdraw iteration: 370.449643
+    bank_account_test.go:61: balance after 3 withdraw iteration: 324.912777
+    bank_account_test.go:61: balance after 4 withdraw iteration: 289.911897
+    bank_account_test.go:61: balance after 5 withdraw iteration: 198.987811
+    bank_account_test.go:61: balance after 6 withdraw iteration: 125.481043
+    bank_account_test.go:61: balance after 7 withdraw iteration: 98.588489
+    bank_account_test.go:61: balance after 8 withdraw iteration: 10.182729
+    bank_account_test.go:56: withdraw error: not enough balance
+    bank_account_test.go:61: balance after 9 withdraw iteration: 10.182729
+    bank_account_test.go:56: withdraw error: not enough balance
+    bank_account_test.go:61: balance after 10 withdraw iteration: 10.182729
+    bank_account_test.go:56: withdraw error: not enough balance
+    bank_account_test.go:61: balance after 11 withdraw iteration: 10.182729
+    bank_account_test.go:56: withdraw error: not enough balance
+    bank_account_test.go:61: balance after 12 withdraw iteration: 10.182729
+    bank_account_test.go:56: withdraw error: not enough balance
+    bank_account_test.go:61: balance after 13 withdraw iteration: 10.182729
+    bank_account_test.go:56: withdraw error: not enough balance
+    bank_account_test.go:61: balance after 14 withdraw iteration: 10.182729
+    bank_account_test.go:65: balance after all withdraw iterations: 10.182729
+```
