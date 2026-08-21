@@ -222,3 +222,78 @@ func (ba *BankAccount) GetBalance() float64 {
     bank_account_test.go:61: balance after 14 withdraw iteration: 10.182729
     bank_account_test.go:65: balance after all withdraw iterations: 10.182729
 ```
+
+## Покрытие тестами
+
+При неполном покрытии тестами, можно легко показать, что в коде могут содержаться баги.
+
+Наша реализация:
+
+```go
+package codewithbags
+
+type AverageCalculator struct {
+}
+
+func NewAverageCalculator() *AverageCalculator {
+	return &AverageCalculator{}
+}
+
+func (c *AverageCalculator) calculateAverage(numbers []int) float64 {
+	countNumbers := len(numbers)
+	if countNumbers == 0 {
+		return 0
+	}
+
+	sum := 0
+	for _, num := range numbers {
+		sum += num
+	}
+
+	return float64(sum) / float64(countNumbers)
+}
+```
+
+Тесты:
+
+```go
+package codewithbags
+
+import "testing"
+
+func TestAverageCalculator(t *testing.T) {
+	calculator := NewAverageCalculator()
+
+	cases := []struct {
+		numbers  []int
+		expected float64
+	}{
+		{[]int{1, 2, 3, 4, 5}, 3.0},
+		{[]int{}, 0.0},
+		{[]int{10, 20, 30}, 20.0},
+	}
+
+	for _, c := range cases {
+		result := calculator.calculateAverage(c.numbers)
+
+		if result != c.expected {
+			t.Errorf("Expected %f, got %f", c.expected, result)
+		}
+	}
+}
+```
+
+В данном случае код покрыт на 100% и точно проверяет наш код:
+
+```bash
+invisible_mechanisms_of_logic/code_with_bags/average_calculator.go:6:	NewAverageCalculator	100.0%
+
+invisible_mechanisms_of_logic/code_with_bags/average_calculator.go:10:	calculateAverage	100.0%
+```
+
+```bash
+PASS
+ok  	invisible_mechanisms_of_logic/code_with_bags	0.448s
+```
+
+Но если мы уберем один кейс, который проверяет, что при нулевой длина входного массива - у нас должен быть 0, тогда мы упускаем эту проверку, следовательно, если бы сама функция была написана некорректно, относительно определенного поведения (отсутствовала проверка на длину входящего массива), тогда были бы баги.
