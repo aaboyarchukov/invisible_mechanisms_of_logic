@@ -8,7 +8,8 @@ func NewAverageCalculator() *AverageCalculator {
 }
 
 func (c *AverageCalculator) calculateAverage(numbers []int) float64 {
-	if len(numbers) == 0 {
+	countNumbers := len(numbers)
+	if countNumbers == 0 {
 		return 0
 	}
 
@@ -17,5 +18,5 @@ func (c *AverageCalculator) calculateAverage(numbers []int) float64 {
 		sum += num
 	}
 
-	return float64(sum) / float64(len(numbers))
+	return float64(sum) / float64(countNumbers)
 }
