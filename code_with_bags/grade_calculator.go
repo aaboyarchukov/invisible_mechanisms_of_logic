@@ -1,6 +1,9 @@
 package codewithbags
 
-import "errors"
+import (
+	"errors"
+	"math"
+)
 
 type GradeCalculator struct{}
 
@@ -9,25 +12,31 @@ func NewGradeCalculator() *GradeCalculator {
 }
 
 var (
-	ErrNegativeGrade  = errors.New("grade is negative")
-	ErrZeroSumOfGrade = errors.New("sum of grades is zero")
+	ErrNegativeGrade = errors.New("grade is negative")
+	ErrEmptyGrades   = errors.New("grades are empty")
+	ErrOverflow      = errors.New("int overflow")
+	ErrGradeTooLarge = errors.New("grade is too large")
 )
 
 var (
 	ZeroAvgGrade    = 0.0
 	InvalidAvgGrade = -1.0
+	MaxGrade        = 100
 )
 
 // conds:
 // - zero len grades
 // - negative grades
-// - sum of grades equal to zero
 // - grades are numbers not runes (it's check by compiler)
 func (gc *GradeCalculator) calculateAverage(grades []int) (float64, error) {
 	countGrades := len(grades)
 
 	if countGrades == 0 {
-		return ZeroAvgGrade, nil
+		return InvalidAvgGrade, ErrEmptyGrades
+	}
+
+	if countGrades > math.MaxInt/MaxGrade {
+		return InvalidAvgGrade, ErrOverflow
 	}
 
 	sum := 0
@@ -36,11 +45,11 @@ func (gc *GradeCalculator) calculateAverage(grades []int) (float64, error) {
 			return InvalidAvgGrade, ErrNegativeGrade
 		}
 
-		sum += grade
-	}
+		if grade > MaxGrade {
+			return InvalidAvgGrade, ErrGradeTooLarge
+		}
 
-	if sum == 0 {
-		return InvalidAvgGrade, ErrZeroSumOfGrade
+		sum += grade
 	}
 
 	return float64(sum) / float64(countGrades), nil
