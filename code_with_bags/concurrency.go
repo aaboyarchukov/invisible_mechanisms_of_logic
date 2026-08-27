@@ -24,7 +24,6 @@ import (
 // }
 
 // correct version
-
 func RaceConditionExample() {
 	counter := 0
 	numberOfThreads := 10
@@ -44,4 +43,37 @@ func RaceConditionExample() {
 	wg.Wait()
 
 	fmt.Printf("Final counter value: %d", counter)
+}
+
+// func DeadlockExample() {
+// 	ch1 := make(chan struct{})
+// 	ch2 := make(chan struct{})
+
+// 	go func() {
+// 		ch1 <- struct{}{}
+// 	}()
+
+// 	go func() {
+// 		ch2 <- struct{}{}
+// 	}()
+// }
+
+// correct version
+func DeadlockExample() {
+	ch1 := make(chan struct{})
+	ch2 := make(chan struct{})
+
+	go func() {
+		ch1 <- struct{}{}
+	}()
+
+	go func() {
+		ch2 <- struct{}{}
+	}()
+
+	<-ch1
+	close(ch1)
+
+	<-ch2
+	close(ch2)
 }
