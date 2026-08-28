@@ -3,6 +3,7 @@ package codewithbags
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 // func RaceConditionExample() {
@@ -50,12 +51,49 @@ func RaceConditionExample() {
 // 	ch2 := make(chan struct{})
 
 // 	go func() {
+// 		<-ch2
 // 		ch1 <- struct{}{}
 // 	}()
 
 // 	go func() {
+// 		<-ch1
 // 		ch2 <- struct{}{}
 // 	}()
+// }
+
+// func DeadlockExampleMutex() {
+// 	mu1, mu2 := sync.Mutex{}, sync.Mutex{}
+
+// 	var wg sync.WaitGroup
+// 	wg.Add(2)
+
+// 	wg.Go(func() {
+// 		mu1.Lock()
+// 		fmt.Println("goroutine 1 acquired mu1")
+
+// 		time.Sleep(50 * time.Millisecond)
+
+// 		mu2.Lock()
+// 		fmt.Println("goroutine 1 acquired mu2")
+
+// 		mu2.Unlock()
+// 		mu1.Unlock()
+// 	})
+
+// 	wg.Go(func() {
+// 		mu2.Lock()
+// 		fmt.Println("goroutine 2 acquired mu2")
+
+// 		time.Sleep(50 * time.Millisecond)
+
+// 		mu1.Lock()
+// 		fmt.Println("goroutine 2 acquired mu1")
+
+// 		mu1.Unlock()
+// 		mu2.Unlock()
+// 	})
+
+// 	wg.Wait()
 // }
 
 // correct version
@@ -63,17 +101,47 @@ func DeadlockExample() {
 	ch1 := make(chan struct{})
 	ch2 := make(chan struct{})
 
-	go func() {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	wg.Go(func() {
+		<-ch2
 		ch1 <- struct{}{}
-	}()
+	})
 
-	go func() {
+	wg.Go(func() {
 		ch2 <- struct{}{}
-	}()
+		<-ch1
+	})
 
-	<-ch1
-	close(ch1)
+	wg.Wait()
+}
 
-	<-ch2
-	close(ch2)
+// correct version
+func DeadlockExampleMutex() {
+	mu1, mu2 := sync.Mutex{}, sync.Mutex{}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	wg.Go(func() {
+		mu1.Lock()
+		fmt.Println("goroutine 1 acquired mu1")
+
+		time.Sleep(50 * time.Millisecond)
+
+		mu1.Unlock()
+
+	})
+
+	wg.Go(func() {
+		mu2.Lock()
+		fmt.Println("goroutine 2 acquired mu2")
+
+		time.Sleep(50 * time.Millisecond)
+
+		mu2.Unlock()
+	})
+
+	wg.Wait()
 }
