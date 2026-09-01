@@ -278,3 +278,169 @@ func DeadlockExampleMutex() {
 ```
 
 Будет лучше разделить ресурсы по каждым горутинам.
+
+## Примеры механизмов синхронизации
+
+Приведем несколько примеров, где мы будем синхронизировать выполнение асинхронных вызовов:
+
+1. Атомики
+   Используется для облегчения взаимодействия с общими ресурсами, атомики позволяются выполнять операции без использования механизмов блокировки:
+
+```go
+package codewithbags
+
+import (
+	"fmt"
+	"sync"
+	"sync/atomic"
+)
+
+func AtomicCounter() {
+	workers := 10
+	var counter atomic.Int64
+	wg := sync.WaitGroup{}
+
+	for range workers {
+		wg.Go(func() {
+			counter.Add(1)
+		})
+	}
+
+	wg.Wait()
+
+	fmt.Printf("Result: %d", counter.Load())
+}
+```
+
+Таким образом мы не блокируем с помощью `mutex` общий ресурс и наши воркеры спокойно изменяют ресурс.
+
+2. Обработка событий
+   В Go мы можем это сделать с помощью внутреннего механизма (каналы с буффером - циклический массив с блокировками)
+
+```go
+func SomeEvent() {
+	time.Sleep(2 * time.Millisecond)
+}
+
+func Producer(ctx context.Context, events chan<- string) {
+	producers := 10
+
+	wg := sync.WaitGroup{}
+	for range producers {
+		wg.Go(func() {
+			for n := 0; ; n++ {
+				SomeEvent()
+				select {
+				case events <- fmt.Sprintf("Event%d", n):
+				case <-ctx.Done():
+					close(events)
+					return
+				}
+			}
+		})
+	}
+}
+
+func Worker(ctx context.Context, id int, events <-chan string) {
+	for {
+		select {
+		case val, ok := <-events:
+			if !ok {
+				return
+			}
+			fmt.Printf("worker %d: %s\n", id, val)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+```
+
+Здесь мы бесконечно пишем и обрабатываем события.
+
+3. FanIn
+   Классический паттерн по объединению нескольких каналов в один
+
+```go
+func FanIn(inputs ...<-chan int) <-chan int {
+	out := make(chan int)
+	var wg sync.WaitGroup
+
+	for _, in := range inputs {
+		wg.Go(func() {
+			defer wg.Done()
+			for v := range in {
+				out <- v
+			}
+		})
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	return out
+}
+```
+
+4. ErrGroup
+   Синхронизация выполнения нескольких потоков - засчет отслеживания возникновения ошибок, при возникновении ошибки - все потоки отменяются
+
+```go
+func Fetch(ctx context.Context, url string) (string, error) {
+	time.Sleep(2 * time.Millisecond)
+
+	return "", nil
+}
+
+func FetchAll(ctx context.Context, urls []string) ([]string, error) {
+	g, ctx := errgroup.WithContext(ctx)
+	results := make([]string, len(urls))
+
+	for i, url := range urls {
+		g.Go(func() error {
+			body, err := Fetch(ctx, url)
+			if err != nil {
+				return fmt.Errorf("fetch %s: %w", url, err)
+			}
+
+			results[i] = body
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+```
+
+5. InMemory AsyncSafty Cache
+   Имплементация кеша, которая устойчив к асинхроному взаимодействию
+
+```go
+type Cache struct {
+	mu   sync.RWMutex
+	data map[string]string
+}
+
+func NewCache() *Cache {
+	return &Cache{data: make(map[string]string)}
+}
+
+func (c *Cache) Get(key string) (string, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	v, ok := c.data[key]
+	return v, ok
+}
+
+func (c *Cache) Set(key, value string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.data[key] = value
+}
+```
