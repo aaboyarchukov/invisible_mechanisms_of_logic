@@ -379,3 +379,84 @@ func ComplexMultiThreadProcessing() {
 ```
 
 Мы изменили способ блокировки при общем доступе к ресурсу (вместо мьютекса - каналы), а также организовали более читаемый код, разделив более сложный код - на несколько чистых функций, уменьшив когнитивную и цикломатическую нагрузку основной функции.
+
+Но для Java модели есть механизм ForkJoinPool - это специализированный пул потоков в Java для управления и выполнения задач, которые могут быть рекурсивно разделены на подзадачи.
+
+```java
+import java.util.Random;
+import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
+
+public class SimplifiedMultiThreadProcessing {
+    private static final int SIZE = 1000000;
+    private static final int[] data = new int[SIZE];
+
+    public static void main(String[] args) {
+        Random random = new Random();
+        for (int i = 0; i < SIZE; i++) {
+            data[i] = random.nextInt(100);
+        }
+
+        ForkJoinPool pool = new ForkJoinPool();
+
+        int sum = pool.submit(() -> Arrays.stream(data).parallel().sum()).join();
+
+        System.out.println("Sum of all elements: " + sum);
+    }
+}
+```
+
+Следующий пример необходимо было выразить в виде чистых функций применив техники разработки в подходе ФП:
+
+```go
+package complexcodelookssimple
+
+import (
+	"errors"
+	"math/big"
+)
+
+var (
+	ErrNotEnoughBalance = errors.New("not enough balance")
+	ErrInvalidValue     = errors.New("invalid value")
+)
+
+var (
+	InvalidBalance = big.NewFloat(-1.0)
+	EmptyBalance   = big.NewFloat(0.0)
+)
+
+type BankAccount struct {
+	balance *big.Float
+}
+
+func New(initBalance *big.Float) *BankAccount {
+	return &BankAccount{
+		balance: initBalance,
+	}
+}
+
+func (ba *BankAccount) Deposit(value *big.Float) (*BankAccount, error) {
+	if value.Cmp(EmptyBalance) == -1 {
+		return New(InvalidBalance), ErrInvalidValue
+	}
+
+	return New(ba.balance.Add(ba.balance, value)), nil
+}
+
+func (ba *BankAccount) Withdraw(value *big.Float) (*BankAccount, error) {
+	if value.Cmp(EmptyBalance) == -1 {
+		return New(InvalidBalance), ErrInvalidValue
+	}
+
+	if ba.balance.Cmp(value) == -1 {
+		return New(InvalidBalance), ErrNotEnoughBalance
+	}
+
+	return New(ba.balance.Sub(ba.balance, value)), nil
+}
+
+func (ba *BankAccount) GetBalance() *big.Float {
+	return ba.balance
+}
+```
