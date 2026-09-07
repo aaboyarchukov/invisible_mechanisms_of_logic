@@ -187,3 +187,195 @@ func ThreadExample(wg *sync.WaitGroup, mu *sync.Mutex) {
 	fmt.Println(counter)
 }
 ```
+
+Следующий пример:
+
+```java
+import java.util.Random;
+
+public class ComplexMultiThreadProcessing {
+    private static final int SIZE = 1000000;
+    private static final int THREADS = 4;
+    private static final int[] data = new int[SIZE];
+    private static volatile int sum = 0;
+
+    public static void main(String[] args) {
+        Random random = new Random();
+        for (int i = 0; i < SIZE; i++) {
+            data[i] = random.nextInt(100);
+        }
+
+        Thread[] threads = new Thread[THREADS];
+        int chunkSize = SIZE / THREADS;
+
+        for (int i = 0; i < THREADS; i++) {
+            final int start = i * chunkSize;
+            final int end = (i + 1) * chunkSize;
+            threads[i] = new Thread(() -> {
+                int localSum = 0;
+                for (int j = start; j < end; j++) {
+                    localSum += data[j];
+                }
+                synchronized (ComplexMultiThreadProcessing.class) {
+                    sum += localSum;
+                }
+            });
+            threads[i].start();
+        }
+
+        for (int i = 0; i < THREADS; i++) {
+            try {
+                threads[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("Sum of all elements: " + sum);
+    }
+}
+```
+
+На Go:
+
+```go
+func ComplexMultiThreadProcessing() {
+	var (
+		SIZE    = 1000000
+		THREADS = 4
+	)
+
+	data := make([]int, SIZE)
+	sum := 0
+
+	randomEngine := rand.New(
+		&rand.Rand{},
+	)
+
+	for i := range SIZE {
+		data[i] = randomEngine.IntN(100)
+	}
+
+	mu := sync.Mutex{}
+	wg := sync.WaitGroup{}
+
+	chunkSize := SIZE / THREADS
+	for i := range THREADS {
+		start := i * chunkSize
+		end := start + chunkSize
+		if i == THREADS-1 {
+			end = SIZE
+		}
+
+		wg.Go(func() {
+			localSum := 0
+			for _, v := range data[start:end] {
+				localSum += v
+			}
+
+			mu.Lock()
+			sum += localSum
+			mu.Unlock()
+		})
+	}
+
+	wg.Wait()
+	fmt.Println("Sum of all elements:", sum)
+}
+```
+
+Данный пример построен на асинхронной работе нескольких потоков, которые суммируют числа.
+
+Недостатки:
+
+- магические числа
+- непонятные переменные
+- работа, которая выполняется внутри циклов
+
+Улучшенный пример:
+
+```go
+func accumSum(data []int, chanAccumValue chan int, start, end int) {
+	localSum := 0
+	chunkSlice := data[start:end]
+
+	for _, v := range chunkSlice {
+		localSum += v
+	}
+
+	chanAccumValue <- localSum
+}
+
+func processRanges(indx, chunkSize, size, amountThreads int) (int, int) {
+	start := indx * chunkSize
+	end := start + chunkSize
+	if indx == amountThreads-1 {
+		end = size
+	}
+
+	return start, end
+}
+
+type bufferOfData struct {
+	buffer []int
+}
+
+func NewBufferOfData(size int) *bufferOfData {
+
+	return &bufferOfData{
+		buffer: make([]int, size),
+	}
+}
+
+func (b *bufferOfData) Map(mapFunc func(ranges int) int, ranges int) {
+	size := len(b.buffer)
+	for i := range size {
+		b.buffer[i] = mapFunc(ranges)
+	}
+}
+
+func (b *bufferOfData) AsyncAccumSum(amountThreads int, wg *sync.WaitGroup, sumChan chan int) {
+	size := len(b.buffer)
+	chunkSize := size / amountThreads
+
+	for i := range amountThreads {
+		start, end := processRanges(i, chunkSize, size, amountThreads)
+		wg.Go(func() {
+			accumSum(b.buffer, sumChan, start, end)
+		})
+	}
+
+}
+
+func ComplexMultiThreadProcessing() {
+	var (
+		SIZE      = 1000000
+		THREADS   = 4
+		intRanges = 100
+		sum       = 0
+	)
+
+	data := NewBufferOfData(SIZE)
+
+	var (
+		wg            = &sync.WaitGroup{}
+		resultSumChan = make(chan int, THREADS)
+	)
+
+	data.Map(rand.IntN, intRanges)
+	data.AsyncAccumSum(THREADS, wg, resultSumChan)
+
+	go func() {
+		wg.Wait()
+		close(resultSumChan)
+	}()
+
+	for localSum := range resultSumChan {
+		sum += localSum
+	}
+
+	fmt.Println("Sum of all elements:", sum)
+}
+```
+
+Мы изменили способ блокировки при общем доступе к ресурсу (вместо мьютекса - каналы), а также организовали более читаемый код, разделив более сложный код - на несколько чистых функций, уменьшив когнитивную и цикломатическую нагрузку основной функции.
