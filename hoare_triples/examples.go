@@ -1,8 +1,8 @@
 package hoaretriples
 
-// P: a = n, b = m, compareResult = True
+// P: a = n, b = m, result = True
 // C: max(a, b)
-// Q: (compareResult = a || compareResult = b ) && (compareResult >= a && compareResult >= b)
+// Q: (result = a || result = b ) && (result >= a && result >= b)
 func max(a, b int) int {
 	if a > b {
 		return a
@@ -11,9 +11,9 @@ func max(a, b int) int {
 	return b
 }
 
-// P: x = n
-// C: abs(a)
-// Q: x {-n, n}
+// P: true
+// C: abs(x)
+// Q: result = |x|
 func abs(x int) int {
 	if x < 0 {
 		return -x
@@ -22,9 +22,9 @@ func abs(x int) int {
 	return x
 }
 
-// P: a = n, b = m, compareResult = NONE
+// P: True
 // C: MaxOfAbs(a, b)
-// Q: compareResult {GREATER, LESS, EQUAL}
+// Q: max(|a|, |b|)
 func MaxOfAbs(a, b int) int {
 	return max(abs(a), abs(b))
 }
