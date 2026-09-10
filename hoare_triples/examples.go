@@ -1,24 +1,14 @@
 package hoaretriples
 
-var (
-	LESS    = -1
-	EQUAL   = 0
-	GREATER = 1
-)
-
-// P: a = n, b = m, compareResult = NONE
+// P: a = n, b = m, compareResult = True
 // C: max(a, b)
-// Q: compareResult {GREATER, LESS, EQUAL}
+// Q: (compareResult = a || compareResult = b ) && (compareResult >= a && compareResult >= b)
 func max(a, b int) int {
 	if a > b {
-		return GREATER
+		return a
 	}
 
-	if a < b {
-		return LESS
-	}
-
-	return EQUAL
+	return b
 }
 
 // P: x = n
