@@ -1,5 +1,7 @@
 package hoaretriples
 
+import "math"
+
 // P: a = n, b = m, result = True
 // C: max(a, b)
 // Q: (result = a || result = b ) && (result >= a && result >= b)
@@ -27,4 +29,29 @@ func abs(x int) int {
 // Q: max(|a|, |b|)
 func MaxOfAbs(a, b int) int {
 	return max(abs(a), abs(b))
+}
+
+var (
+	InvalidMax = math.MinInt
+	MinimumInt = math.MinInt
+)
+
+// P: {arr.length > 0}
+// C: findMax(arr)
+// Q: {result = max(arr)}
+// I: {result = max(arr[0:i+1])}
+func findMax(arr []int) int {
+	result := MinimumInt
+
+	if len(arr) < 0 {
+		return InvalidMax
+	}
+
+	for number := range arr {
+		if number > result {
+			result = number
+		}
+	}
+
+	return result
 }
