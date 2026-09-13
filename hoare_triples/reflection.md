@@ -145,7 +145,7 @@ func MaxOfAbs(a, b int) int {
 func findMax(arr []int) int {
 	result := MinimumInt
 
-	if len(arr) < 0 {
+	if len(arr) == 0 {
 		return InvalidMax
 	}
 
