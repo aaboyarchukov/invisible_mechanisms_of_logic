@@ -138,7 +138,7 @@ func MaxOfAbs(a, b int) int {
 Нахождение максимума в массиве:
 
 ```go
-// P: {arr.length > 0}
+// P: {len(arr) > 0}
 // C: findMax(arr)
 // Q: {result = max(arr)}
 // I: {result = max(arr[0:i+1])}

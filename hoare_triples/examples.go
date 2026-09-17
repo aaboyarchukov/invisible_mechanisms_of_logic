@@ -36,7 +36,7 @@ var (
 	MinimumInt = math.MinInt
 )
 
-// P: {arr.length > 0}
+// P: {len(arr) > 0}
 // C: findMax(arr)
 // Q: {result = max(arr)}
 // I: {result = max(arr[0:i+1])}
@@ -54,4 +54,45 @@ func findMax(arr []int) int {
 	}
 
 	return result
+}
+
+func chunkArray(arr []int, left, right int) int {
+	middle := len(arr) / 2
+
+	target := arr[middle]
+
+	for left <= right {
+		for arr[left] < target {
+			left++
+		}
+
+		for arr[right] > target {
+			right++
+		}
+
+		if left >= right {
+			return right
+		}
+
+		arr[left], arr[right] = arr[right], arr[left]
+
+	}
+
+	return right
+}
+
+// P: {len(arr) > 0}
+// C: quickSort(arr)
+// Q: {arr[0] < arr[1] < ... < arr[n]}
+func quickSort(arr []int, left, right int) {
+	if len(arr) < 2 {
+		return
+	}
+
+	for left < right {
+		partitionIndx := chunkArray(arr, left, right)
+		quickSort(arr, left, partitionIndx)
+		quickSort(arr, partitionIndx+1, right)
+	}
+
 }
