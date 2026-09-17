@@ -152,3 +152,30 @@ public class Main {
 - снизить зависимость за счет общих интерфейсов
 - определить выполнение цельного куска кода в одной блоке обработки исключений
 - следовать OCP - чтобы родительский класс был неизменным
+
+## Дополнительные примеры:
+
+```java
+class Animal {
+    public void makeSound() {
+        System.out.println("Some generic animal sound");
+    }
+}
+
+class Cat extends Animal {
+
+    @Override
+    public void makeSound() {
+        System.out.println("Meow");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal cat = new Cat();
+        cat.makeSound();
+    }
+}
+```
+
+Данная программа отработает одинаково, так как этот метод перезапишет родительский.
