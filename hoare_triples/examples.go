@@ -56,6 +56,10 @@ func findMax(arr []int) int {
 	return result
 }
 
+// P: {len(arr) > 0}
+// C: chunkArray(arr, left, right)
+// Q: {arr[0] < arr[1] < ... < arr[n]}}
+// I: {left <= right, arr[left] <= arr[left+1] <= ... <= arr[right]}
 func chunkArray(arr []int, left, right int) int {
 	middle := (left + right) / 2
 
@@ -82,9 +86,11 @@ func chunkArray(arr []int, left, right int) int {
 }
 
 // P: {len(arr) > 0}
-// C: quickSort(arr)
-// Q: {arr[0] < arr[1] < ... < arr[n]}
-// I: {left < right}
+// C: quickSort(arr, left, right)
+// Q: {arr[0] < arr[1] < ... < arr[n]}}
+// I: {left <= right}
+// I1: {arr[left] <= arr[left+1] <= ... <= arr[partitionIndx]}
+// I2: {arr[partitionIndx + 1] <= arr[partitionIndx+2] <= ... <= arr[right]}
 func quickSort(arr []int, left, right int) {
 	if len(arr) < 2 {
 		return
