@@ -166,3 +166,67 @@ func findMax(arr []int) int {
 - при `i = 1`: `result = max(arr[0:1])`
 - при `i = n`: `result = max(arr[0:n]) -> max(arr)`
 - Получается с учетом Трипла Хоара, мы получаем в конце соблюдение постусловия, так как на каждом промежутке прохождения массива - мы будем получать максимум
+
+---
+
+Алгоритм быстрой сортировки:
+
+```go
+// P: {len(arr) > 0}
+// C: chunkArray(arr, left, right)
+// Q: {arr[0] < arr[1] < ... < arr[n]}}
+// I: {left <= right, arr[left] <= arr[left+1] <= ... <= arr[right]}
+func chunkArray(arr []int, left, right int) int {
+	middle := (left + right) / 2
+
+	target := arr[middle]
+
+	for left <= right {
+		for arr[left] < target {
+			left++
+		}
+
+		for arr[right] > target {
+			right--
+		}
+
+		if left >= right {
+			return right
+		}
+
+		arr[left], arr[right] = arr[right], arr[left]
+
+	}
+
+	return right
+}
+
+// P: {len(arr) > 0}
+// C: quickSort(arr, left, right)
+// Q: {arr[0] < arr[1] < ... < arr[n]}}
+// I: {left <= right}
+// I1: {arr[left] <= arr[left+1] <= ... <= arr[partitionIndx]}
+// I2: {arr[partitionIndx + 1] <= arr[partitionIndx+2] <= ... <= arr[right]}
+func quickSort(arr []int, left, right int) {
+	if len(arr) < 2 {
+		return
+	}
+
+	if left < right {
+		partitionIndx := chunkArray(arr, left, right)
+		quickSort(arr, left, partitionIndx)
+		quickSort(arr, partitionIndx+1, right)
+	}
+
+}
+```
+
+Здесь две важные составляющие: разбиение массива и рекурсивные вызовы
+
+**Разбиение массива:**
+
+Здесь для каждого прохода цикла соблюдается инвариант того, что элементы должны стоять упорядоченно, соответсвенно, если каждая из частей массива будет упорядочена относительно середины (слева меньшие элементы, а справа большие), то в итоге мы получим упорядоченный массив.
+
+**Рекурсивные вызовы:**
+
+Нам необходимо привести в упорядоченный вид две половины массива, поэтому нам необходимо рекурсивно вызвать сортировку для левой и правой половин, далее из выше доказанного разбиения получаем, что каждая из частей будет упорядочена, соответсвенно и в конечном итоге все будет упорядочено.
